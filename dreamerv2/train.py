@@ -80,6 +80,10 @@ def main():
       env = common.DMC(
           task, config.action_repeat, config.render_size, config.dmc_camera)
       env = common.NormalizeAction(env)
+    elif suite == 'metaworld':
+      env = common.MetaWorld(
+          task, config.action_repeat, config.render_size)
+      env = common.NormalizeAction(env)
     elif suite == 'atari':
       env = common.Atari(
           task, config.action_repeat, config.render_size,
