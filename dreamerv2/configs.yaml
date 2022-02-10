@@ -8,6 +8,10 @@ defaults:
   envs_parallel: none
   render_size: [64, 64]
   dmc_camera: -1
+  metaworld_camera: behindGripper
+  reward_scale: 100
+  sparse_rewards: False
+  sparse_threshold: 300
   atari_grayscale: True
   time_limit: 0
   action_repeat: 1
@@ -174,6 +178,8 @@ metaworld:
   critic_opt.lr: 8e-5
   actor_ent: 1e-4
   kl.free: 1.0
+  metaworld_camera: behindGripper
+  reward_scale: 1
 
 debug:
 

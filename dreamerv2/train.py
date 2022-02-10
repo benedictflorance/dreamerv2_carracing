@@ -82,7 +82,7 @@ def main():
       env = common.NormalizeAction(env)
     elif suite == 'metaworld':
       env = common.MetaWorld(
-          task, config.action_repeat, config.render_size)
+          task, config.action_repeat, config.render_size, config.metaworld_camera, config.reward_scale, config.sparse_rewards, config.sparse_threshold)
       env = common.NormalizeAction(env)
     elif suite == 'atari':
       env = common.Atari(
@@ -104,7 +104,7 @@ def main():
     length = len(ep['reward']) - 1
     score = float(ep['reward'].astype(np.float64).sum())
     print(f'{mode.title()} episode has {length} steps and return {score:.1f}.')
-    logger.scalar(f'{mode}_return', score)
+    logger.scalar(f'{mode}_return', score*config.reward_scale)
     logger.scalar(f'{mode}_length', length)
     for key, value in ep.items():
       if re.match(config.log_keys_sum, key):

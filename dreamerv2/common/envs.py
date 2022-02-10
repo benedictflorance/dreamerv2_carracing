@@ -163,13 +163,17 @@ class DMC:
     return obs
 
 class MetaWorld:
-  def __init__(self, name, action_repeat=1, size=(64, 64)):
+  def __init__(self, name, action_repeat=1, size=(64, 64), camera=None, reward_scale=1, sparse=False, sparse_threshold=0):
     from metaworld.envs import ALL_V2_ENVIRONMENTS_GOAL_OBSERVABLE
     task = name.replace("_", "-") + "-v2-goal-observable"
     env = ALL_V2_ENVIRONMENTS_GOAL_OBSERVABLE[task]()
     self._env = env
     self._action_repeat = action_repeat
     self._size = size
+    self._camera = camera
+    self._reward_scale = reward_scale
+    self._sparse = sparse
+    self._sparse_threshold = sparse_threshold
 
   @property
   def obs_space(self):
@@ -193,8 +197,15 @@ class MetaWorld:
       total_reward += reward 
       if self._env.curr_path_length == self._env.max_path_length: #https://github.com/rlworkgroup/metaworld/issues/236
         break
+    if self._sparse:
+      if total_reward > self._sparse_threshold:
+        total_reward = 1
+      else:
+        total_reward = 0
+    else:
+      total_reward = total_reward/self._reward_scale
     return {
-        'image': self._env.render(offscreen=True, resolution=self._size),
+        'image': self._env.render(offscreen=True, resolution=self._size, camera_name=self._camera),
         'reward': total_reward,
         'is_first': False,
         'is_last': self._env.curr_path_length == self._env.max_path_length,
@@ -208,7 +219,7 @@ class MetaWorld:
         'is_first': True,
         'is_last': False,
         'is_terminal': False,
-        'image': self._env.render(offscreen=True, resolution=self._size),
+        'image': self._env.render(offscreen=True, resolution=self._size, camera_name=self._camera)
     }
     return obs
 
