@@ -8,8 +8,8 @@ defaults:
   envs_parallel: none
   render_size: [64, 64]
   dmc_camera: -1
-  metaworld_camera: behindGripper
-  reward_scale: 100
+  metaworld_camera: topview
+  reward_scale: 1
   sparse_rewards: False
   sparse_threshold: 300
   atari_grayscale: True

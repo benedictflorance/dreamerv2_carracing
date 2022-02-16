@@ -7,7 +7,7 @@ import traceback
 import cloudpickle
 import gym
 import numpy as np
-
+import mujoco_py
 
 class GymWrapper:
 
@@ -165,8 +165,8 @@ class DMC:
 class MetaWorld:
   def __init__(self, name, action_repeat=1, size=(64, 64), camera=None, reward_scale=1, sparse=False, sparse_threshold=0):
     from metaworld.envs import ALL_V2_ENVIRONMENTS_GOAL_OBSERVABLE
-    task = name.replace("_", "-") + "-v2-goal-observable"
-    env = ALL_V2_ENVIRONMENTS_GOAL_OBSERVABLE[task]()
+    self._task = name.replace("_", "-") + "-v2-goal-observable"
+    env = ALL_V2_ENVIRONMENTS_GOAL_OBSERVABLE[self._task]()
     self._env = env
     self._action_repeat = action_repeat
     self._size = size
@@ -174,7 +174,20 @@ class MetaWorld:
     self._reward_scale = reward_scale
     self._sparse = sparse
     self._sparse_threshold = sparse_threshold
-
+    self._camera_settings = {
+      "lexa": dict(distance=0.6, lookat=[0, 0.65, 0], azimuth=90, elevation=41+180),
+      "latco_hammer": dict(distance=0.8, lookat=[0.2, 0.65, -0.1], azimuth=220, elevation=-140),
+      "latco_others": dict(distance=2.6, lookat=[1.1, 1.1, -0.1], azimuth=205, elevation=-165)
+    }
+    if self._camera == "lexa":
+      self._cam = self._camera_settings[self._camera]
+    elif self._camera == "latco":
+      if "hammer" in self._task:
+        self._cam = self._camera_settings[self._camera+"_hammer"]
+      else:
+        self._cam = self._camera_settings[self._camera+"_others"]
+    if self._camera == "lexa" or self._camera == "latco":
+      self._env.viewer = mujoco_py.MjRenderContextOffscreen(self._env.sim, -1)
   @property
   def obs_space(self):
     spaces = {
@@ -197,15 +210,19 @@ class MetaWorld:
       total_reward += reward 
       if self._env.curr_path_length == self._env.max_path_length: #https://github.com/rlworkgroup/metaworld/issues/236
         break
+    if self._camera == "lexa" or self._camera == "latco":
+      self._env.viewer.cam.distance, self._env.viewer.cam.azimuth, self._env.viewer.cam.elevation = self._cam["distance"], self._cam["azimuth"], self._cam["elevation"]
+      self._env.viewer.cam.lookat[0], self._env.viewer.cam.lookat[1], self._env.viewer.cam.lookat[2] = self._cam["lookat"][0], self._cam["lookat"][1], self._cam["lookat"][2] 
+      img = self._env.render(offscreen=True, resolution=self._size)
+    else:      
+      img = self._env.render(offscreen=True, resolution=self._size, camera_name=self._camera)
     if self._sparse:
-      if total_reward > self._sparse_threshold:
-        total_reward = 1
-      else:
-        total_reward = 0
+      total_reward = info['success'] 
+      # total_reward = 1 if total_reward > self._sparse_threshold else 0
     else:
       total_reward = total_reward/self._reward_scale
     return {
-        'image': self._env.render(offscreen=True, resolution=self._size, camera_name=self._camera),
+        'image': img,
         'reward': total_reward,
         'is_first': False,
         'is_last': self._env.curr_path_length == self._env.max_path_length,
@@ -213,13 +230,19 @@ class MetaWorld:
     }
 
   def reset(self):
-    image = self._env.reset()
+    self._env.reset()
+    if self._camera == "lexa" or self._camera == "latco":
+      self._env.viewer.cam.distance, self._env.viewer.cam.azimuth, self._env.viewer.cam.elevation = self._cam["distance"], self._cam["azimuth"], self._cam["elevation"]
+      self._env.viewer.cam.lookat[0], self._env.viewer.cam.lookat[1], self._env.viewer.cam.lookat[2] = self._cam["lookat"][0], self._cam["lookat"][1], self._cam["lookat"][2] 
+      img = self._env.render(offscreen=True, resolution=self._size)
+    else:      
+      img = self._env.render(offscreen=True, resolution=self._size, camera_name=self._camera)
     obs = {
         'reward': 0.0,
         'is_first': True,
         'is_last': False,
         'is_terminal': False,
-        'image': self._env.render(offscreen=True, resolution=self._size, camera_name=self._camera)
+        'image': img
     }
     return obs
 
