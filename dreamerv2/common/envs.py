@@ -3,7 +3,7 @@ import os
 import sys
 import threading
 import traceback
-
+import cv2
 import cloudpickle
 import gym
 import numpy as np
@@ -179,14 +179,8 @@ class MetaWorld:
       "latco_hammer": dict(distance=0.8, lookat=[0.2, 0.65, -0.1], azimuth=220, elevation=-140),
       "latco_others": dict(distance=2.6, lookat=[1.1, 1.1, -0.1], azimuth=205, elevation=-165)
     }
-    if self._camera == "lexa":
+    if self._camera == "lexa" or self._camera == "latco_hammer" or self._camera == "latco_others":
       self._cam = self._camera_settings[self._camera]
-    elif self._camera == "latco":
-      if "hammer" in self._task:
-        self._cam = self._camera_settings[self._camera+"_hammer"]
-      else:
-        self._cam = self._camera_settings[self._camera+"_others"]
-    if self._camera == "lexa" or self._camera == "latco":
       self._env.viewer = mujoco_py.MjRenderContextOffscreen(self._env.sim, -1)
   @property
   def obs_space(self):
@@ -210,12 +204,14 @@ class MetaWorld:
       total_reward += reward 
       if self._env.curr_path_length == self._env.max_path_length: #https://github.com/rlworkgroup/metaworld/issues/236
         break
-    if self._camera == "lexa" or self._camera == "latco":
+    if self._camera == "lexa" or self._camera == "latco_hammer" or self._camera == "latco_others":
       self._env.viewer.cam.distance, self._env.viewer.cam.azimuth, self._env.viewer.cam.elevation = self._cam["distance"], self._cam["azimuth"], self._cam["elevation"]
       self._env.viewer.cam.lookat[0], self._env.viewer.cam.lookat[1], self._env.viewer.cam.lookat[2] = self._cam["lookat"][0], self._cam["lookat"][1], self._cam["lookat"][2] 
-      img = self._env.render(offscreen=True, resolution=self._size)
+      self._env.viewer.render(self._size[0], self._size[1])
+      img = self._env.viewer.read_pixels(self._size[0], self._size[1])[0]
     else:      
       img = self._env.render(offscreen=True, resolution=self._size, camera_name=self._camera)
+    cv2.imwrite("sample.jpg", img)
     if self._sparse:
       total_reward = info['success'] 
       # total_reward = 1 if total_reward > self._sparse_threshold else 0
@@ -231,10 +227,11 @@ class MetaWorld:
 
   def reset(self):
     self._env.reset()
-    if self._camera == "lexa" or self._camera == "latco":
+    if self._camera == "lexa" or self._camera == "latco_hammer" or self._camera == "latco_others":
       self._env.viewer.cam.distance, self._env.viewer.cam.azimuth, self._env.viewer.cam.elevation = self._cam["distance"], self._cam["azimuth"], self._cam["elevation"]
       self._env.viewer.cam.lookat[0], self._env.viewer.cam.lookat[1], self._env.viewer.cam.lookat[2] = self._cam["lookat"][0], self._cam["lookat"][1], self._cam["lookat"][2] 
-      img = self._env.render(offscreen=True, resolution=self._size)
+      self._env.viewer.render(self._size[0], self._size[1])
+      img = self._env.viewer.read_pixels(self._size[0], self._size[1])[0]
     else:      
       img = self._env.render(offscreen=True, resolution=self._size, camera_name=self._camera)
     obs = {
