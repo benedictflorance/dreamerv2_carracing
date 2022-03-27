@@ -35,8 +35,11 @@ def main():
   config = common.Config(configs['defaults'])
   for name in parsed.configs:
     config = config.update(configs[name])
+  config = config.update({'steps': config.steps//config.action_repeat, 
+                'eval_every': config.eval_every//config.action_repeat,   
+                'log_every': config.log_every//config.action_repeat,
+                'time_limit': config.time_limit//config.action_repeat})
   config = common.Flags(config).parse(remaining)
-
   logdir = pathlib.Path(config.logdir).expanduser()
   logdir.mkdir(parents=True, exist_ok=True)
   config.save(logdir / 'config.yaml')
@@ -72,7 +75,7 @@ def main():
   should_log = common.Every(config.log_every)
   should_video_train = common.Every(config.eval_every)
   should_video_eval = common.Every(config.eval_every)
-  should_expl = common.Until(config.expl_until)
+  should_expl = common.Until(int(config.expl_until / config.action_repeat))
 
   def make_env(mode):
     suite, task = config.task.split('_', 1)

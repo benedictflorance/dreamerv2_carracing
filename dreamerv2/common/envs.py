@@ -211,7 +211,6 @@ class MetaWorld:
       img = self._env.viewer.read_pixels(self._size[0], self._size[1])[0]
     else:      
       img = self._env.render(offscreen=True, resolution=self._size, camera_name=self._camera)
-    cv2.imwrite("sample.jpg", img)
     if self._sparse:
       total_reward = info['success'] 
       # total_reward = 1 if total_reward > self._sparse_threshold else 0

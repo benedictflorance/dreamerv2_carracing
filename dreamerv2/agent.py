@@ -24,6 +24,7 @@ class Agent(common.Module):
 
   @tf.function
   def policy(self, obs, state=None, mode='train'):
+    #mode='train'
     obs = tf.nest.map_structure(tf.tensor, obs)
     tf.py_function(lambda: self.tfstep.assign(
         int(self.step), read_value=False), [], [])
