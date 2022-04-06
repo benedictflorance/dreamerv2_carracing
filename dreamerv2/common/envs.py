@@ -226,6 +226,7 @@ class MetaWorld:
 
   def reset(self):
     self._env.reset()
+    self._env.step(np.array([0, 0, 0, 0])) #Reset has a different goal
     if self._camera == "lexa" or self._camera == "latco_hammer" or self._camera == "latco_others":
       self._env.viewer.cam.distance, self._env.viewer.cam.azimuth, self._env.viewer.cam.elevation = self._cam["distance"], self._cam["azimuth"], self._cam["elevation"]
       self._env.viewer.cam.lookat[0], self._env.viewer.cam.lookat[1], self._env.viewer.cam.lookat[2] = self._cam["lookat"][0], self._cam["lookat"][1], self._cam["lookat"][2] 
