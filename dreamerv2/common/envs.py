@@ -168,6 +168,7 @@ class MetaWorld:
     self._task = name.replace("_", "-") + "-v2-goal-observable"
     env = ALL_V2_ENVIRONMENTS_GOAL_OBSERVABLE[self._task]()
     self._env = env
+    self._env.random_init = False
     self._action_repeat = action_repeat
     self._size = size
     self._camera = camera
@@ -199,10 +200,12 @@ class MetaWorld:
 
   def step(self, action):
     total_reward = 0.0
+    is_last = False
     for _ in range(self._action_repeat):
       _, reward, done, _ = self._env.step(action['action'])
       total_reward += reward 
       if self._env.curr_path_length == self._env.max_path_length: #https://github.com/rlworkgroup/metaworld/issues/236
+        is_last = True
         break
     if self._camera == "lexa" or self._camera == "latco_hammer" or self._camera == "latco_others":
       self._env.viewer.cam.distance, self._env.viewer.cam.azimuth, self._env.viewer.cam.elevation = self._cam["distance"], self._cam["azimuth"], self._cam["elevation"]
@@ -212,21 +215,20 @@ class MetaWorld:
     else:      
       img = self._env.render(offscreen=True, resolution=self._size, camera_name=self._camera)
     if self._sparse:
-      total_reward = info['success'] 
-      # total_reward = 1 if total_reward > self._sparse_threshold else 0
+      total_reward = 1 if total_reward > self._sparse_threshold else 0
     else:
       total_reward = total_reward/self._reward_scale
     return {
         'image': img,
         'reward': total_reward,
         'is_first': False,
-        'is_last': self._env.curr_path_length == self._env.max_path_length,
-        'is_terminal': done,
+        'is_last': is_last,
+        'is_terminal': is_last,
     }
 
   def reset(self):
     self._env.reset()
-    self._env.step(np.array([0, 0, 0, 0])) #Reset has a different goal
+    #self._env.step(np.array([0, 0, 0, 0])) #Reset has a different goal
     if self._camera == "lexa" or self._camera == "latco_hammer" or self._camera == "latco_others":
       self._env.viewer.cam.distance, self._env.viewer.cam.azimuth, self._env.viewer.cam.elevation = self._cam["distance"], self._cam["azimuth"], self._cam["elevation"]
       self._env.viewer.cam.lookat[0], self._env.viewer.cam.lookat[1], self._env.viewer.cam.lookat[2] = self._cam["lookat"][0], self._cam["lookat"][1], self._cam["lookat"][2] 

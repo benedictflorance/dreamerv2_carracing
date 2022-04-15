@@ -11,7 +11,7 @@ defaults:
   metaworld_camera: topview
   reward_scale: 1
   sparse_rewards: False
-  sparse_threshold: 300
+  sparse_threshold: 15
   atari_grayscale: True
   time_limit: 0
   action_repeat: 1
