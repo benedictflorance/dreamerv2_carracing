@@ -87,6 +87,10 @@ def main():
       env = common.MetaWorld(
           task, config.action_repeat, config.render_size, config.metaworld_camera, config.reward_scale, config.sparse_rewards, config.sparse_threshold)
       env = common.NormalizeAction(env)
+    elif suite == 'gym':
+      env = common.Gym(
+          task, config.action_repeat, config.render_size)
+      env = common.NormalizeAction(env)
     elif suite == 'atari':
       env = common.Atari(
           task, config.action_repeat, config.render_size,

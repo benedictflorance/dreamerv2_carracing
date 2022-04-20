@@ -7,7 +7,6 @@ import cv2
 import cloudpickle
 import gym
 import numpy as np
-import mujoco_py
 
 class GymWrapper:
 
@@ -69,6 +68,55 @@ class GymWrapper:
     obs['is_terminal'] = False
     return obs
 
+class Gym:
+
+  def __init__(self, name, action_repeat=1, size=(64, 64)):
+    self._task = name.replace("_", " ").title().replace(" ", "") + "-v1"
+    self._env = gym.make(self._task)
+    self._action_repeat = action_repeat
+    self._size = size
+    
+  @property
+  def obs_space(self):
+    spaces = {
+        'image': gym.spaces.Box(0, 255, self._size + (3,), dtype=np.uint8),
+        'reward': gym.spaces.Box(-np.inf, np.inf, (), dtype=np.float32),
+        'is_first': gym.spaces.Box(0, 1, (), dtype=np.bool),
+        'is_last': gym.spaces.Box(0, 1, (), dtype=np.bool),
+        'is_terminal': gym.spaces.Box(0, 1, (), dtype=np.bool),
+    }
+    return spaces
+
+  @property
+  def act_space(self):
+    return {'action': self._env.action_space}
+
+  def step(self, action):
+    total_reward = 0.0
+    for _ in range(self._action_repeat):
+      image, reward, done, info = self._env.step(action['action'])
+      total_reward += reward
+      if done:
+        break
+    image = np.asarray(cv2.resize(image, self._size))
+    return {
+        'image': image,
+        'reward': total_reward,
+        'is_first': False,
+        'is_last': done,
+        'is_terminal': done,
+    }
+
+  def reset(self):
+    image = self._env.reset()    
+    image = np.asarray(cv2.resize(image, self._size))
+    return {
+        'image': image,
+        'reward': 0.0,
+        'is_first': True,
+        'is_last': False,
+        'is_terminal': False,
+    }
 
 class DMC:
 
@@ -164,6 +212,7 @@ class DMC:
 
 class MetaWorld:
   def __init__(self, name, action_repeat=1, size=(64, 64), camera=None, reward_scale=1, sparse=False, sparse_threshold=0):
+    import mujoco_py
     from metaworld.envs import ALL_V2_ENVIRONMENTS_GOAL_OBSERVABLE
     self._task = name.replace("_", "-") + "-v2-goal-observable"
     env = ALL_V2_ENVIRONMENTS_GOAL_OBSERVABLE[self._task]()
