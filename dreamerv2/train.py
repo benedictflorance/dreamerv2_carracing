@@ -88,8 +88,12 @@ def main():
           task, config.action_repeat, config.render_size, config.metaworld_camera, config.reward_scale, config.sparse_rewards, config.sparse_threshold)
       env = common.NormalizeAction(env)
     elif suite == 'gym':
-      env = common.Gym(
-          task, config.action_repeat, config.render_size)
+      if mode == "train":
+        env = common.Gym(
+            task, config.action_repeat, config.render_size, config.train_game_mode, config.train_map_id)
+      else:
+        env = common.Gym(
+            task, config.action_repeat, config.render_size, config.eval_game_mode, config.eval_map_id)        
       env = common.NormalizeAction(env)
     elif suite == 'atari':
       env = common.Atari(

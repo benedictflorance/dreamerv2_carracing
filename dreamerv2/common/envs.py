@@ -70,9 +70,9 @@ class GymWrapper:
 
 class Gym:
 
-  def __init__(self, name, action_repeat=1, size=(64, 64)):
+  def __init__(self, name, action_repeat=1, size=(64, 64), game_mode=None, map_id=None):
     self._task = name.replace("_", " ").title().replace(" ", "") + "-v1"
-    self._env = gym.make(self._task)
+    self._env = gym.make(self._task, game_mode=game_mode, map_id=int(map_id))
     self._action_repeat = action_repeat
     self._size = size
     

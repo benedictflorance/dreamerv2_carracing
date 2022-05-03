@@ -32,6 +32,10 @@ defaults:
   log_keys_max: '^$'
   precision: 16
   jit: True
+  train_game_mode: None
+  eval_game_mode: None
+  train_map_id: None
+  eval_map_id: None
 
   # Agent
   clip_rewards: tanh
